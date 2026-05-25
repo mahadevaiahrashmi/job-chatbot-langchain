@@ -21,6 +21,23 @@ search endpoint, persist the rows to CSV + SQLite, and validate the output.
 It does this with a four-node LangGraph state graph so that each step is
 an isolated, testable agent with its own model, prompt, and bound tools.
 
+## Tech stack
+
+| Layer | Choice | Why |
+|---|---|---|
+| Graph framework | `langgraph>=0.2` | Explicit `StateGraph` with typed transitions between nodes. Lets us add conditional edges, retries, and parallel branches later without restructuring. |
+| LangChain core | `langchain>=0.3` | `@tool` decorator, message types, shared abstractions with the rest of the LangChain ecosystem. |
+| Model binding | `langchain-anthropic>=0.3` | `ChatAnthropic` wrapper conforming to LangChain's chat-model interface. |
+| HTTP | `httpx>=0.27` | Workday client. |
+| CLI | `rich>=13.7` | REPL formatting. |
+| Config | `python-dotenv>=1.0` | `ANTHROPIC_API_KEY` from `.env`. |
+| Storage | stdlib `csv` + `sqlite3` | No third-party DB. |
+| Tests | `pytest>=8.0` (dev) | Offline; monkeypatches `search_jobs` at both import sites. |
+| Build | `hatchling` | Minimal PEP 517 backend. |
+| Python | `>=3.11` | `TypedDict` features, modern type hints. |
+
+Model used: `claude-sonnet-4-5` — each node binds its own `ChatAnthropic(model=...)` instance, so different nodes could in principle use different models without changing the graph.
+
 ## High-level architecture
 
 The system is a compiled LangGraph `StateGraph` with four nodes in a fixed
